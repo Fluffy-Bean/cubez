@@ -4,11 +4,11 @@
 package main
 
 import (
+	"github.com/Fluffy-Bean/cubez"
+	m "github.com/Fluffy-Bean/cubez/math"
 	gl "github.com/go-gl/gl/v3.3-core/gl"
 	glfw "github.com/go-gl/glfw/v3.1/glfw"
 	mgl "github.com/go-gl/mathgl/mgl32"
-	"github.com/tbogdala/cubez"
-	m "github.com/tbogdala/cubez/math"
 )
 
 const (
@@ -29,7 +29,7 @@ var (
 func updateObjects(delta float64) {
 	for _, cube := range cubes {
 		body := cube.Collider.GetBody()
-		body.Integrate(m.Real(delta))
+		body.Integrate(delta)
 		cube.Collider.CalculateDerivedData()
 
 		// for now we hack in the position and rotation of the collider into the renderable
@@ -70,7 +70,7 @@ func updateCallback(delta float64) {
 	updateObjects(delta)
 	foundContacts, contacts := generateContacts(delta)
 	if foundContacts {
-		cubez.ResolveContacts(len(contacts)*8, contacts, m.Real(delta))
+		cubez.ResolveContacts(len(contacts)*8, contacts, delta)
 	}
 }
 
@@ -160,7 +160,7 @@ func fire() {
 
 		// create the collision box for the the cube
 		cubeCollider := cubez.NewCollisionCube(nil, m.Vector3{0.5, 0.5, 0.5})
-		cubeCollider.Body.Position = m.Vector3{m.Real(i*2.0-cubesToMake/2) - 0.5 + m.Real(offset), 10.0, 0.0}
+		cubeCollider.Body.Position = m.Vector3{float64(i)*2.0 - float64(cubesToMake)/2.0 - 0.5 + float64(offset), 10.0, 0.0}
 		cubeCollider.Body.SetMass(8.0)
 		cubeCollider.Body.CanSleep = true
 

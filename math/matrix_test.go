@@ -14,9 +14,9 @@ func TestMat3Identity(t *testing.T) {
 
 	m3 := m1.MulMatrix3(&m2)
 
-	if !RealEqual(m3[0], 1.0) || !RealEqual(m3[3], 0.0) || !RealEqual(m3[6], 0.0) ||
-		!RealEqual(m3[1], 0.0) || !RealEqual(m3[4], 1.0) || !RealEqual(m3[7], 0.0) ||
-		!RealEqual(m3[2], 0.0) || !RealEqual(m3[5], 0.0) || !RealEqual(m3[8], 1.0) {
+	if !FloatsEqual(m3[0], 1.0) || !FloatsEqual(m3[3], 0.0) || !FloatsEqual(m3[6], 0.0) ||
+		!FloatsEqual(m3[1], 0.0) || !FloatsEqual(m3[4], 1.0) || !FloatsEqual(m3[7], 0.0) ||
+		!FloatsEqual(m3[2], 0.0) || !FloatsEqual(m3[5], 0.0) || !FloatsEqual(m3[8], 1.0) {
 		t.Errorf("Multiplication of identities does not yield identity:\n\t%v", m3)
 	}
 }
@@ -28,9 +28,9 @@ func TestMat3x4Identity(t *testing.T) {
 
 	m3 := m1.MulMatrix3x4(&m2)
 
-	if !RealEqual(m3[0], 1.0) || !RealEqual(m3[3], 0.0) || !RealEqual(m3[6], 0.0) || !RealEqual(m3[9], 0.0) ||
-		!RealEqual(m3[1], 0.0) || !RealEqual(m3[4], 1.0) || !RealEqual(m3[7], 0.0) || !RealEqual(m3[10], 0.0) ||
-		!RealEqual(m3[2], 0.0) || !RealEqual(m3[5], 0.0) || !RealEqual(m3[8], 1.0) || !RealEqual(m3[11], 0.0) {
+	if !FloatsEqual(m3[0], 1.0) || !FloatsEqual(m3[3], 0.0) || !FloatsEqual(m3[6], 0.0) || !FloatsEqual(m3[9], 0.0) ||
+		!FloatsEqual(m3[1], 0.0) || !FloatsEqual(m3[4], 1.0) || !FloatsEqual(m3[7], 0.0) || !FloatsEqual(m3[10], 0.0) ||
+		!FloatsEqual(m3[2], 0.0) || !FloatsEqual(m3[5], 0.0) || !FloatsEqual(m3[8], 1.0) || !FloatsEqual(m3[11], 0.0) {
 		t.Errorf("Multiplication of identities does not yield identity:\n\t%v", m3)
 	}
 }
@@ -45,9 +45,9 @@ func TestMat3Multiplications(t *testing.T) {
 	m1Invert := m1.Invert()
 	m3 := m1.MulMatrix3(&m1Invert)
 
-	if !RealEqual(m3[0], 1.0) || !RealEqual(m3[3], 0.0) || !RealEqual(m3[6], 0.0) ||
-		!RealEqual(m3[1], 0.0) || !RealEqual(m3[4], 1.0) || !RealEqual(m3[7], 0.0) ||
-		!RealEqual(m3[2], 0.0) || !RealEqual(m3[5], 0.0) || !RealEqual(m3[8], 1.0) {
+	if !FloatsEqual(m3[0], 1.0) || !FloatsEqual(m3[3], 0.0) || !FloatsEqual(m3[6], 0.0) ||
+		!FloatsEqual(m3[1], 0.0) || !FloatsEqual(m3[4], 1.0) || !FloatsEqual(m3[7], 0.0) ||
+		!FloatsEqual(m3[2], 0.0) || !FloatsEqual(m3[5], 0.0) || !FloatsEqual(m3[8], 1.0) {
 		t.Errorf("Multiplication by it's inversion does not yield identity:\n\t%v", m3)
 	}
 }

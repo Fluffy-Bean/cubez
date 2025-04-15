@@ -4,13 +4,15 @@
 package cubez
 
 import (
-	m "github.com/tbogdala/cubez/math"
+	"math"
+
+	m "github.com/Fluffy-Bean/cubez/math"
 )
 
 // a few internal epsilon values
 const (
-	velocityEpsilon m.Real = 0.01
-	positionEpsilon m.Real = 0.01
+	velocityEpsilon float64 = 0.01
+	positionEpsilon float64 = 0.01
 )
 
 // Contact holds all of the data associated with a contact between two collider primitives.
@@ -19,10 +21,10 @@ type Contact struct {
 	Bodies [2]*RigidBody
 
 	// Friction holds the lateral friction coefficient at the contact
-	Friction m.Real
+	Friction float64
 
 	// Restitution holdes the normal restitution coefficient at the contact
-	Restitution m.Real
+	Restitution float64
 
 	// ContactPoint is the position of the contact in World Space
 	ContactPoint m.Vector3
@@ -33,7 +35,7 @@ type Contact struct {
 	// Penetration is the depth of penetration at the contact point. If
 	// both Bodies are set, then this should be midway between the
 	// inter-penetrating points.
-	Penetration m.Real
+	Penetration float64
 
 	// contactToWorld is a transform matrix that converts coordiantes in the contact's
 	// frame of reference to World coordinates. The columns are orthornomal vectors.
@@ -47,7 +49,7 @@ type Contact struct {
 	contactVelocity m.Vector3
 
 	// desiredDeltaVelocity holds the required change in velocity for this contact to be resolved.
-	desiredDeltaVelocity m.Real
+	desiredDeltaVelocity float64
 }
 
 // NewContact returns a new Contact object.
@@ -56,7 +58,7 @@ func NewContact() *Contact {
 	return c
 }
 
-func (c *Contact) calculateInternals(duration m.Real) {
+func (c *Contact) calculateInternals(duration float64) {
 	// make sure that if there's only one body that it's in the first spot
 	if c.Bodies[0] == nil {
 		c.ContactNormal.MulWith(-1.0)
@@ -84,9 +86,9 @@ func (c *Contact) calculateInternals(duration m.Real) {
 	c.calculateDesiredDeltaVelocity(duration)
 }
 
-func (c *Contact) calculateDesiredDeltaVelocity(duration m.Real) {
-	const velocityLimit m.Real = 0.25
-	var velocityFromAcc m.Real
+func (c *Contact) calculateDesiredDeltaVelocity(duration float64) {
+	const velocityLimit float64 = 0.25
+	var velocityFromAcc float64
 
 	// calculate the acceleration induced velocity accumlated this frame
 	var tempVelocity m.Vector3
@@ -103,7 +105,7 @@ func (c *Contact) calculateDesiredDeltaVelocity(duration m.Real) {
 
 	// if the velocity is very slow, limit the restitution
 	restitution := c.Restitution
-	if m.RealAbs(c.contactVelocity[0]) < velocityLimit {
+	if math.Abs(c.contactVelocity[0]) < velocityLimit {
 		restitution = 0.0
 	}
 
@@ -119,13 +121,13 @@ func (c *Contact) calculateContactBasis() {
 	var contactTangentY m.Vector3
 	var contactTangentZ m.Vector3
 
-	absContactNormalX := m.RealAbs(c.ContactNormal[0])
-	absContactNormalY := m.RealAbs(c.ContactNormal[1])
+	absContactNormalX := math.Abs(c.ContactNormal[0])
+	absContactNormalY := math.Abs(c.ContactNormal[1])
 
 	// check whether the z axis is nearer to the x or y axis
 	if absContactNormalX > absContactNormalY {
 		// generate a scaling factor to ensure results are normalized
-		s := m.Real(1.0) / m.RealSqrt(c.ContactNormal[2]*c.ContactNormal[2]+c.ContactNormal[0]*c.ContactNormal[0])
+		s := float64(1.0) / math.Sqrt(c.ContactNormal[2]*c.ContactNormal[2]+c.ContactNormal[0]*c.ContactNormal[0])
 
 		// the new x axis is at right angles to the world y axis
 		contactTangentY[0] = c.ContactNormal[2] * s
@@ -138,7 +140,7 @@ func (c *Contact) calculateContactBasis() {
 		contactTangentZ[2] = -c.ContactNormal[1] * contactTangentY[0]
 	} else {
 		// generate a scaling factor to ensure results are normalized
-		s := m.Real(1.0) / m.RealSqrt(c.ContactNormal[2]*c.ContactNormal[2]+c.ContactNormal[1]*c.ContactNormal[1])
+		s := float64(1.0) / math.Sqrt(c.ContactNormal[2]*c.ContactNormal[2]+c.ContactNormal[1]*c.ContactNormal[1])
 
 		// the new x axis is at right angles to the world y axis
 		contactTangentY[0] = 0
@@ -156,7 +158,7 @@ func (c *Contact) calculateContactBasis() {
 }
 
 // calculateLocalVelocity calculates the velocity of the contact point on th given body.
-func (c *Contact) calculateLocalVelocity(bodyIndex int, duration m.Real) m.Vector3 {
+func (c *Contact) calculateLocalVelocity(bodyIndex int, duration float64) m.Vector3 {
 	body := c.Bodies[bodyIndex]
 
 	// work out the velocity of the contact point
@@ -205,7 +207,7 @@ func (c *Contact) matchAwakeState() {
 //
 // NOTE: Contacts that cannot interact with each other should be passed to
 // separate calls of ResolveContacts for performance reasons.
-func ResolveContacts(maxIterations int, contacts []*Contact, duration m.Real) {
+func ResolveContacts(maxIterations int, contacts []*Contact, duration float64) {
 	// start off with some sanity checks
 	if duration <= 0.0 || contacts == nil || len(contacts) == 0 {
 		return
@@ -222,7 +224,7 @@ func ResolveContacts(maxIterations int, contacts []*Contact, duration m.Real) {
 }
 
 // prepareContacts sets up contacts for processing by calculating internal data.
-func prepareContacts(contacts []*Contact, duration m.Real) {
+func prepareContacts(contacts []*Contact, duration float64) {
 	for _, e := range contacts {
 		e.calculateInternals(duration)
 	}
@@ -230,7 +232,7 @@ func prepareContacts(contacts []*Contact, duration m.Real) {
 
 // adjustPositions resolves the positional issues with the given array of
 // constraints using the given number of iterations.
-func adjustPositions(maxIterations int, contacts []*Contact, duration m.Real) {
+func adjustPositions(maxIterations int, contacts []*Contact, duration float64) {
 	// iteratively resolve interpenetrations in order of severity
 	iterationsUsed := 0
 	for iterationsUsed < maxIterations {
@@ -267,7 +269,7 @@ func adjustPositions(maxIterations int, contacts []*Contact, duration m.Real) {
 
 							// the sign of the change is positive if we're dealing with the second body
 							// in a contact and negative otherwise (because we're subtracting the resolution).
-							var sign m.Real = 1.0
+							var sign float64 = 1.0
 							if b == 0 {
 								sign = -1.0
 							}
@@ -283,10 +285,10 @@ func adjustPositions(maxIterations int, contacts []*Contact, duration m.Real) {
 }
 
 // applyPositionChange performs an inertia weighted penetration resolution of this contact alone.
-func (c *Contact) applyPositionChange(penetration m.Real) (linearChange, angularChange [2]m.Vector3) {
-	const angularLimit m.Real = 0.2
-	var angularInertia, linearInertia, angularMove, linearMove [2]m.Real
-	var totalInertia m.Real
+func (c *Contact) applyPositionChange(penetration float64) (linearChange, angularChange [2]m.Vector3) {
+	const angularLimit float64 = 0.2
+	var angularInertia, linearInertia, angularMove, linearMove [2]float64
+	var totalInertia float64
 
 	// we need to work out the inertia of each object in the direction
 	// of the contact normal due to angular inertia only
@@ -322,7 +324,7 @@ func (c *Contact) applyPositionChange(penetration m.Real) (linearChange, angular
 
 		// the linear and angular movements required are in proportion
 		// to the two inverse inertias
-		var sign m.Real = 1.0
+		var sign float64 = 1.0
 		if i != 0 {
 			sign = -1.0
 		}
@@ -387,7 +389,7 @@ func (c *Contact) applyPositionChange(penetration m.Real) (linearChange, angular
 
 // adjustVelocities resolves the velocity issues with the given array of constraints,
 // using the given number of iterations.
-func adjustVelocities(maxIterations int, contacts []*Contact, duration m.Real) {
+func adjustVelocities(maxIterations int, contacts []*Contact, duration float64) {
 	// iteratively handle impacts in order of severity
 	iterationsUsed := 0
 	for iterationsUsed < maxIterations {
@@ -427,7 +429,7 @@ func adjustVelocities(maxIterations int, contacts []*Contact, duration m.Real) {
 
 						// the sign of the change is negative if we're dealing with
 						// the second body in a contact.
-						var sign m.Real = 1.0
+						var sign float64 = 1.0
 						if b == 1 {
 							sign = -1.0
 						}
@@ -588,7 +590,7 @@ func (c *Contact) calculateFrictionImpulse(inverseInertiaTensors [2]m.Matrix3) (
 	impulseContact = impulseMatrix.MulVector3(&velKill)
 
 	// check for exceeding friction
-	planarImpulse := m.RealSqrt(impulseContact[1]*impulseContact[1] + impulseContact[2]*impulseContact[2])
+	planarImpulse := math.Sqrt(impulseContact[1]*impulseContact[1] + impulseContact[2]*impulseContact[2])
 	if planarImpulse > impulseContact[0]*c.Friction {
 		// we need to use dynamic friction
 		impulseContact[1] /= planarImpulse

@@ -4,7 +4,9 @@
 package cubez
 
 import (
-	m "github.com/tbogdala/cubez/math"
+	"math"
+
+	m "github.com/Fluffy-Bean/cubez/math"
 )
 
 // Collider is an interface for collision primitive objects to make calculating collisions
@@ -31,7 +33,7 @@ type CollisionPlane struct {
 	Normal m.Vector3
 
 	// Offset is the distance of the plane from the origin
-	Offset m.Real
+	Offset float64
 }
 
 // CollisionCube is a rigid body that can be considered an axis-alligned cube
@@ -67,7 +69,7 @@ type CollisionSphere struct {
 	transform m.Matrix3x4
 
 	// Radius is the radius of the sphere.
-	Radius m.Real
+	Radius float64
 }
 
 /*
@@ -78,7 +80,7 @@ type CollisionSphere struct {
 
 // NewCollisionPlane creates a new CollisionPlane object with the
 // normal and offset specified.
-func NewCollisionPlane(n m.Vector3, o m.Real) *CollisionPlane {
+func NewCollisionPlane(n m.Vector3, o float64) *CollisionPlane {
 	plane := new(CollisionPlane)
 	plane.Normal = n
 	plane.Offset = o
@@ -133,7 +135,7 @@ func (p *CollisionPlane) CheckAgainstCube(cube *CollisionCube, existingContacts 
 // NewCollisionSphere creates a new CollisionSphere object with the radius specified
 // for a given RigidBody. If a RigidBody is not specified, then a new RigidBody
 // object is created for the new collider object.
-func NewCollisionSphere(optBody *RigidBody, radius m.Real) *CollisionSphere {
+func NewCollisionSphere(optBody *RigidBody, radius float64) *CollisionSphere {
 	s := new(CollisionSphere)
 	s.Offset.SetIdentity()
 	s.Radius = radius
@@ -371,9 +373,9 @@ func (cube *CollisionCube) CheckAgainstSphere(sphere *CollisionSphere, existingC
 	position := sphere.transform.GetAxis(3)
 	relCenter := cube.transform.TransformInverse(&position)
 	// check to see if we can exclude contact
-	if m.RealAbs(relCenter[0])-sphere.Radius > cube.HalfSize[0] ||
-		m.RealAbs(relCenter[1])-sphere.Radius > cube.HalfSize[1] ||
-		m.RealAbs(relCenter[2])-sphere.Radius > cube.HalfSize[2] {
+	if math.Abs(relCenter[0])-sphere.Radius > cube.HalfSize[0] ||
+		math.Abs(relCenter[1])-sphere.Radius > cube.HalfSize[1] ||
+		math.Abs(relCenter[2])-sphere.Radius > cube.HalfSize[2] {
 		return false, existingContacts
 	}
 
@@ -414,7 +416,7 @@ func (cube *CollisionCube) CheckAgainstSphere(sphere *CollisionSphere, existingC
 	// since closestPoint is relCenter at this point, transforming it back to
 	// world coordinates makes it equal to the sphere position which will not
 	// be able to produce a contact normal.
-	if m.RealEqual(c.ContactNormal.Magnitude(), 0.0) {
+	if m.FloatsEqual(c.ContactNormal.Magnitude(), 0.0) {
 		// our hack for this is to simply use the sphere's velocity as the contact
 		// normal, which is probably not the correct thing to do, but looks okay.
 		c.ContactNormal = sphere.Body.Velocity
@@ -422,8 +424,8 @@ func (cube *CollisionCube) CheckAgainstSphere(sphere *CollisionSphere, existingC
 	c.ContactNormal.Normalize()
 
 	c.Penetration = sphere.Radius
-	if !m.RealEqual(dist, 0.0) {
-		c.Penetration -= m.RealSqrt(dist)
+	if !m.FloatsEqual(dist, 0.0) {
+		c.Penetration -= math.Sqrt(dist)
 	} else {
 		c.Penetration = 0.0
 	}
@@ -442,13 +444,13 @@ func (cube *CollisionCube) CheckAgainstSphere(sphere *CollisionSphere, existingC
 
 // penetrationOnAxis checks if the two boxes overlap along a given axis and
 // returns the amount of overlap.
-func penetrationOnAxis(one *CollisionCube, two *CollisionCube, axis *m.Vector3, toCenter *m.Vector3) m.Real {
+func penetrationOnAxis(one *CollisionCube, two *CollisionCube, axis *m.Vector3, toCenter *m.Vector3) float64 {
 	// project the half-size of one onto axis
 	oneProject := transformToAxis(one, axis)
 	twoProject := transformToAxis(two, axis)
 
 	// Project this onto the axis
-	distance := m.RealAbs(toCenter.Dot(axis))
+	distance := math.Abs(toCenter.Dot(axis))
 
 	// Return the overlap (i.e. positive indicates
 	// overlap, negative indicates separation).
@@ -456,7 +458,7 @@ func penetrationOnAxis(one *CollisionCube, two *CollisionCube, axis *m.Vector3, 
 }
 
 func tryAxis(one *CollisionCube, two *CollisionCube, axis m.Vector3, toCenter *m.Vector3,
-	index int, smallestPenetration m.Real, smallestCase int) (bool, m.Real, int) {
+	index int, smallestPenetration float64, smallestCase int) (bool, float64, int) {
 	// make sure we have a normalized axis, and don't check almost parallel axes
 	if axis.SquareMagnitude() < m.Epsilon {
 		return true, smallestPenetration, smallestCase
@@ -479,7 +481,7 @@ func tryAxis(one *CollisionCube, two *CollisionCube, axis m.Vector3, toCenter *m
 // fillPointFaceBoxBox is called when we know that a vertex from
 // box two is in contact with box one.
 func fillPointFaceBoxBox(one *CollisionCube, two *CollisionCube, toCenter *m.Vector3,
-	best int, pen m.Real, existingContacts []*Contact) []*Contact {
+	best int, pen float64, existingContacts []*Contact) []*Contact {
 	// We know which axis the collision is on (i.e. best),
 	// but we need to work out which of the two faces on this axis.
 	normal := one.transform.GetAxis(best)
@@ -516,8 +518,8 @@ func fillPointFaceBoxBox(one *CollisionCube, two *CollisionCube, toCenter *m.Vec
 	return contacts
 }
 
-func contactPoint(pOne *m.Vector3, dOne *m.Vector3, oneSize m.Real,
-	pTwo *m.Vector3, dTwo *m.Vector3, twoSize m.Real, useOne bool) m.Vector3 {
+func contactPoint(pOne *m.Vector3, dOne *m.Vector3, oneSize float64,
+	pTwo *m.Vector3, dTwo *m.Vector3, twoSize float64, useOne bool) m.Vector3 {
 	// If useOne is true, and the contact point is outside
 	// the edge (in the case of an edge-face contact) then
 	// we use one's midpoint, otherwise we use two's.
@@ -537,7 +539,7 @@ func contactPoint(pOne *m.Vector3, dOne *m.Vector3, oneSize m.Real,
 	denom := smOne*smTwo - dpOneTwo*dpOneTwo
 
 	// Zero denominator indicates parrallel lines
-	if m.RealAbs(denom) < m.Epsilon {
+	if math.Abs(denom) < m.Epsilon {
 		if useOne {
 			return *pOne
 		}
@@ -759,12 +761,12 @@ func intersectCubeAndHalfSpace(cube *CollisionCube, plane *CollisionPlane) bool 
 	return cubeDistance <= plane.Offset
 }
 
-func transformToAxis(cube *CollisionCube, axis *m.Vector3) m.Real {
+func transformToAxis(cube *CollisionCube, axis *m.Vector3) float64 {
 	cubeAxisX := cube.transform.GetAxis(0)
 	cubeAxisY := cube.transform.GetAxis(1)
 	cubeAxisZ := cube.transform.GetAxis(2)
 
-	return cube.HalfSize[0]*m.RealAbs(axis.Dot(&cubeAxisX)) +
-		cube.HalfSize[1]*m.RealAbs(axis.Dot(&cubeAxisY)) +
-		cube.HalfSize[2]*m.RealAbs(axis.Dot(&cubeAxisZ))
+	return cube.HalfSize[0]*math.Abs(axis.Dot(&cubeAxisX)) +
+		cube.HalfSize[1]*math.Abs(axis.Dot(&cubeAxisY)) +
+		cube.HalfSize[2]*math.Abs(axis.Dot(&cubeAxisZ))
 }

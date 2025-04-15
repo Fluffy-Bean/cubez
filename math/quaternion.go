@@ -6,9 +6,9 @@ package math
 import "math"
 
 // QuatFromAxis creates an quaternion from an axis and an angle.
-func QuatFromAxis(angle, x, y, z Real) Quat {
-	s := RealSin(angle / 2.0)
-	c := RealCos(angle / 2.0)
+func QuatFromAxis(angle, x, y, z float64) Quat {
+	s := math.Sin(angle / 2.0)
+	c := math.Cos(angle / 2.0)
 
 	result := Quat{c, x * s, y * s, z * s}
 	result.Normalize()
@@ -17,7 +17,7 @@ func QuatFromAxis(angle, x, y, z Real) Quat {
 
 // AddScaledVector adds the given vector to this quaternion, scaled
 // by the given amount.
-func (q *Quat) AddScaledVector(v *Vector3, scale Real) {
+func (q *Quat) AddScaledVector(v *Vector3, scale float64) {
 	var temp Quat
 	temp[0] = 0.0
 	temp[1] = v[0] * scale
@@ -38,13 +38,13 @@ func (q *Quat) SetIdentity() {
 }
 
 // Len returns the length of the quaternion.
-func (q *Quat) Len() Real {
-	return RealSqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3])
+func (q *Quat) Len() float64 {
+	return math.Sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3])
 }
 
 // Mul multiplies the quaternion by another quaternion.
 func (q *Quat) Mul(q2 *Quat) {
-	var w, x, y, z Real
+	var w, x, y, z float64
 	w = q[0]*q2[0] - q[1]*q2[1] - q[2]*q2[2] - q[3]*q2[3]
 	x = q[0]*q2[1] + q[1]*q2[0] + q[2]*q2[3] - q[3]*q2[2]
 	y = q[0]*q2[2] + q[2]*q2[0] + q[3]*q2[1] - q[1]*q2[3]
@@ -78,7 +78,7 @@ func (q *Quat) Conjugated() Quat {
 func (q *Quat) Normalize() {
 	length := q.Len()
 
-	if RealEqual(1.0, length) {
+	if FloatsEqual(1.0, length) {
 		return
 	}
 
@@ -155,7 +155,7 @@ func QuatBetweenVectors(s, d *Vector3) Quat {
 	}
 
 	axis := start.Cross(&dest)
-	ang := RealSqrt((1.0 + cosTheta) * 2.0)
+	ang := math.Sqrt((1.0 + cosTheta) * 2.0)
 	axis.MulWith(1.0 / ang)
 
 	return Quat{
@@ -180,7 +180,7 @@ func (q *Quat) Inverse() {
 }
 
 // Scale scales every element of the quaternion by some constant factor.
-func (q *Quat) Scale(c Real) {
+func (q *Quat) Scale(c float64) {
 	q[0] *= c
 	q[1] *= c
 	q[2] *= c
@@ -188,6 +188,6 @@ func (q *Quat) Scale(c Real) {
 }
 
 // Dot calculates the dot product between two quaternions, equivalent to if this was a Vector4
-func (q *Quat) Dot(q2 *Quat) Real {
+func (q *Quat) Dot(q2 *Quat) float64 {
 	return q[0]*q2[0] + q[1]*q2[1] + q[2]*q2[2] + q[3]*q2[3]
 }

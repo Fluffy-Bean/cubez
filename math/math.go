@@ -19,95 +19,58 @@ import (
 	"math"
 )
 
-// Real is the type of float used in the library.
-type Real float64
-
 // Espilon is used to test equality of the floats and represents how
-// close two Reals can be and still test positive for equality.
-const Epsilon Real = 1e-7
+// close two floats can be and still test positive for equality.
+const Epsilon float64 = 1e-7
 
 const (
-	MinNormal = Real(1.1754943508222875e-38) // 1 / 2**(127 - 1)
-	MinValue  = Real(math.SmallestNonzeroFloat64)
-	MaxValue  = Real(math.MaxFloat64)
+	MinNormal = 1.1754943508222875e-38 // 1 / 2**(127 - 1)
+	MinValue  = math.SmallestNonzeroFloat64
+	MaxValue  = math.MaxFloat64
 )
 
 var (
-	InfPos = Real(math.Inf(1))
-	InfNeg = Real(math.Inf(-1))
-	NaN    = Real(math.NaN())
+	InfPos = math.Inf(1)
+	InfNeg = math.Inf(-1)
+	NaN    = math.NaN()
 )
 
 // Matrix3 is a 3x3 matrix of floats in column-major order.
-type Matrix3 [9]Real
+type Matrix3 [9]float64
 
 // Matrix3x4 is a 3x4 matrix of floats in column-major order
 // that can be used to hold a rotation and translation in 3D space
 // where the 4th row would have been [0 0 0 1]
-type Matrix3x4 [12]Real
+type Matrix3x4 [12]float64
 
 // Matrix4 is a 4x4 matrix of floats in column-major order.
-type Matrix4 [16]Real
+type Matrix4 [16]float64
 
-// Vector3 is a vector of three floats.
-type Vector3 [3]Real
-
-// Vector4 is a vector of four floats.
-type Vector4 [4]Real
-
-// Quat is the type of a quaternion (w,x,y,z).
-type Quat Vector4
-
-// RealEqual tests the two Real numbers for equality, which really means
+// FloatsEqual tests the two float64 numbers for equality, which really means
 // that it tests whether or not the difference between the two is
 // smaller than Epsilon.
-func RealEqual(a, b Real) bool {
+func FloatsEqual(a, b float64) bool {
 	// handle cases like inf
 	if a == b {
 		return true
 	}
 
-	diff := Real(math.Abs(float64(a - b)))
+	diff := math.Abs(a - b)
 
 	// if a or b is 0 or really close to it
 	if a*b == 0 || diff < MinNormal {
 		return diff < Epsilon*Epsilon
 	}
 
-	return diff/Real(math.Abs(float64(a))+math.Abs(float64(b))) < Epsilon
+	return diff/math.Abs(a)+math.Abs(b) < Epsilon
 }
 
 // DegToRad converts degrees to radians
-func DegToRad(angle Real) Real {
+func DegToRad(angle float64) float64 {
 	return angle * math.Pi / 180.0
 }
 
 // RadToDeg converts radians to degrees
-func RadToDeg(angle Real) Real {
+func RadToDeg(angle float64) float64 {
 	return angle * 180.0 / math.Pi
-}
-
-// RealAbs is an absolute value wrapper for the Real type.
-func RealAbs(a Real) Real {
-	return Real(math.Abs(float64(a)))
-}
-
-// RealSqrt is a square root wrapper for the Real type.
-func RealSqrt(a Real) Real {
-	return Real(math.Sqrt(float64(a)))
-}
-
-// RealSin is a sin function wrapper for the Real type.
-func RealSin(a Real) Real {
-	return Real(math.Sin(float64(a)))
-}
-
-// RealCos is a cos function wrapper for the Real type.
-func RealCos(a Real) Real {
-	return Real(math.Cos(float64(a)))
-}
-
-// RealIsNaN returns true if the value is Not a Number.
-func RealIsNaN(a Real) bool {
-	return math.IsNaN(float64(a))
 }

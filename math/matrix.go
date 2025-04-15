@@ -56,7 +56,7 @@ func (m *Matrix3) SetComponents(v1 *Vector3, v2 *Vector3, v3 *Vector3) {
 }
 
 // SetInertiaTensorCoeffs sets the value of the matrix from inertia tensor values.
-func (m *Matrix3) SetInertiaTensorCoeffs(ix, iy, iz, ixy, ixz, iyz Real) {
+func (m *Matrix3) SetInertiaTensorCoeffs(ix, iy, iz, ixy, ixz, iyz float64) {
 	m[0], m[3], m[6] = ix, -ixy, -ixz
 	m[1], m[4], m[7] = -ixy, iy, -iyz
 	m[2], m[5], m[8] = -ixz, -iyz, iz
@@ -65,7 +65,7 @@ func (m *Matrix3) SetInertiaTensorCoeffs(ix, iy, iz, ixy, ixz, iyz Real) {
 // SetBlockInertiaTensor sets the value of the matrix as an inertia tensor
 // of a rectangular block aligned with the body's coordinate system with the
 // given axis half sizes and mass.
-func (m *Matrix3) SetBlockInertiaTensor(halfSize *Vector3, mass Real) {
+func (m *Matrix3) SetBlockInertiaTensor(halfSize *Vector3, mass float64) {
 	squares := *halfSize
 	squares.ComponentProduct(halfSize)
 	m.SetInertiaTensorCoeffs(
@@ -101,7 +101,7 @@ func (m1 *Matrix3) MulMatrix3(m2 *Matrix3) Matrix3 {
 }
 
 // MulWith multiplies a 3x3 matrix by a scalar value.
-func (m *Matrix3) MulWith(s Real) {
+func (m *Matrix3) MulWith(s float64) {
 	m[0] *= s
 	m[1] *= s
 	m[2] *= s
@@ -124,7 +124,7 @@ func (m *Matrix3) Transpose() Matrix3 {
 
 // Determinant calculates the determinant of a matrix which is a measure of a square matrix's
 // singularity and invertability, among other things.
-func (m *Matrix3) Determinant() Real {
+func (m *Matrix3) Determinant() float64 {
 	return m[0]*m[4]*m[8] + m[3]*m[7]*m[2] + m[6]*m[1]*m[5] - m[6]*m[4]*m[2] - m[3]*m[1]*m[8] - m[0]*m[7]*m[5]
 }
 
@@ -132,7 +132,7 @@ func (m *Matrix3) Determinant() Real {
 // that when multiplied by the original, yields the identity.
 func (m *Matrix3) Invert() Matrix3 {
 	det := m.Determinant()
-	if RealEqual(det, 0.0) {
+	if FloatsEqual(det, 0.0) {
 		return Matrix3{}
 	}
 

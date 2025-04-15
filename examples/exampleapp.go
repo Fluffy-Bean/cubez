@@ -6,21 +6,20 @@ package main
 import (
 	"errors"
 	"fmt"
+	"image"
+	"image/draw"
+	"image/png"
 	"math"
+	"os"
 	"runtime"
 	"strings"
 	"time"
 
-	"image"
-	"image/draw"
-	"image/png"
-	"os"
-
+	"github.com/Fluffy-Bean/cubez"
+	m "github.com/Fluffy-Bean/cubez/math"
 	gl "github.com/go-gl/gl/v3.3-core/gl"
 	glfw "github.com/go-gl/glfw/v3.1/glfw"
 	mgl "github.com/go-gl/mathgl/mgl32"
-	"github.com/tbogdala/cubez"
-	m "github.com/tbogdala/cubez/math"
 )
 
 var (

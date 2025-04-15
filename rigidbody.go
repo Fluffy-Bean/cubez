@@ -4,8 +4,9 @@
 package cubez
 
 import (
-	m "github.com/tbogdala/cubez/math"
 	"math"
+
+	m "github.com/Fluffy-Bean/cubez/math"
 )
 
 const (
@@ -24,12 +25,12 @@ type RigidBody struct {
 	// LinearDamping holds the amount of damping applied to the linear motion
 	// of the RigidBody. This is required to remove energy that might get
 	// added due to the numerical instability of floating point operations.
-	LinearDamping m.Real
+	LinearDamping float64
 
 	// AngularDamping holds the amount of damping applied to angular modtion
 	// of the RigidBody. Damping is required to remove energy added through
 	// numerical instability in the integrator.
-	AngularDamping m.Real
+	AngularDamping float64
 
 	// Position is the position of the RigidBody in World Space.
 	Position m.Vector3
@@ -72,13 +73,13 @@ type RigidBody struct {
 
 	// inverseMass holds the inverse of the mass of the RigidBody which
 	// is used much more often in calculations than just the mass.
-	inverseMass m.Real
+	inverseMass float64
 
 	// mass is the stored mass of the object and is used to calculate
 	// inverseMass.
 	// NOTE: This variable should not be changed directly unless
 	// inverseMass is also changed.
-	mass m.Real
+	mass float64
 
 	// transform holds a transofm matrix for converting Body Space into World Space.
 	transform m.Matrix3x4
@@ -97,7 +98,7 @@ type RigidBody struct {
 
 	// motion holds the amount of motion of the body and is a recently weighted
 	// mean that can be used to put a body to sleep.
-	motion m.Real
+	motion float64
 }
 
 // NewRigidBody creates a new RigidBody object and returns it.
@@ -121,7 +122,7 @@ func (body *RigidBody) Clone() *RigidBody {
 }
 
 // SetMass sets the mass of the RigidBody object.
-func (body *RigidBody) SetMass(mass m.Real) {
+func (body *RigidBody) SetMass(mass float64) {
 	body.mass = mass
 	body.inverseMass = 1.0 / mass
 }
@@ -142,7 +143,7 @@ func (body *RigidBody) HasFiniteMass() bool {
 }
 
 // GetMass gets the mass of the RigidBody object.
-func (body *RigidBody) GetMass() m.Real {
+func (body *RigidBody) GetMass() float64 {
 	if body.inverseMass == 0.0 {
 		return m.MaxValue
 	}
@@ -150,7 +151,7 @@ func (body *RigidBody) GetMass() m.Real {
 }
 
 // GetInverseMass gets the inverse mass of the RigidBody object.
-func (body *RigidBody) GetInverseMass() m.Real {
+func (body *RigidBody) GetInverseMass() float64 {
 	return body.inverseMass
 }
 
@@ -210,7 +211,7 @@ func (body *RigidBody) ClearAccumulators() {
 
 // Integrate takes all of the forces accumulated in the RigidBody and
 // change the Position and Orientation of the object.
-func (body *RigidBody) Integrate(duration m.Real) {
+func (body *RigidBody) Integrate(duration float64) {
 	if body.IsAwake == false {
 		return
 	}
@@ -230,8 +231,8 @@ func (body *RigidBody) Integrate(duration m.Real) {
 	body.Rotation.AddScaled(&angularAcceleration, duration)
 
 	// impose drag
-	body.Velocity.MulWith(m.Real(math.Pow(float64(body.LinearDamping), float64(duration))))
-	body.Rotation.MulWith(m.Real(math.Pow(float64(body.AngularDamping), float64(duration))))
+	body.Velocity.MulWith(math.Pow(body.LinearDamping, duration))
+	body.Rotation.MulWith(math.Pow(body.AngularDamping, duration))
 
 	// adjust positions
 	// update linear positions
@@ -247,7 +248,7 @@ func (body *RigidBody) Integrate(duration m.Real) {
 	// update the kinetic energy store and possibly put the body to sleep
 	if body.CanSleep {
 		currentMotion := body.Velocity.Dot(&body.Velocity) + body.Rotation.Dot(&body.Rotation)
-		bias := m.Real(math.Pow(0.5, float64(duration)))
+		bias := float64(math.Pow(0.5, float64(duration)))
 		body.motion = bias*body.motion + (1.0-bias)*currentMotion
 
 		if body.motion < sleepEpsilon {
@@ -264,7 +265,8 @@ func (body *RigidBody) Integrate(duration m.Real) {
 // directly by client code; it is called automatically during integration.
 //
 // Particularly, call this after modifying:
-//   Position, Orientation
+//
+//	Position, Orientation
 func (body *RigidBody) CalculateDerivedData() {
 	body.Orientation.Normalize()
 	body.transform.SetAsTransform(&body.Position, &body.Orientation)

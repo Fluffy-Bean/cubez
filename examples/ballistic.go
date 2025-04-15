@@ -4,11 +4,11 @@
 package main
 
 import (
+	"github.com/Fluffy-Bean/cubez"
+	m "github.com/Fluffy-Bean/cubez/math"
 	gl "github.com/go-gl/gl/v3.3-core/gl"
 	glfw "github.com/go-gl/glfw/v3.1/glfw"
 	mgl "github.com/go-gl/mathgl/mgl32"
-	"github.com/tbogdala/cubez"
-	m "github.com/tbogdala/cubez/math"
 )
 
 var (
@@ -27,7 +27,7 @@ var (
 func updateObjects(delta float64) {
 	// for now there's only one box to update
 	body := cube.Collider.GetBody()
-	body.Integrate(m.Real(delta))
+	body.Integrate(delta)
 	cube.Collider.CalculateDerivedData()
 
 	// for now we hack in the position and rotation of the collider into the renderable
@@ -36,7 +36,7 @@ func updateObjects(delta float64) {
 
 	for _, bullet := range bullets {
 		bulletBody := bullet.Collider.GetBody()
-		bulletBody.Integrate(m.Real(delta))
+		bulletBody.Integrate(delta)
 		bullet.Collider.CalculateDerivedData()
 		SetGlVector3(&bullet.Node.Location, &bulletBody.Position)
 		SetGlQuat(&bullet.Node.LocalRotation, &bulletBody.Orientation)
@@ -100,7 +100,7 @@ func updateCallback(delta float64) {
 	updateObjects(delta)
 	foundContacts, contacts := generateContacts(delta)
 	if foundContacts {
-		cubez.ResolveContacts(len(contacts)*8, contacts, m.Real(delta))
+		cubez.ResolveContacts(len(contacts)*8, contacts, delta)
 	}
 }
 
@@ -160,7 +160,7 @@ func main() {
 	cubeNode.Color = mgl.Vec4{1.0, 0.0, 0.0, 1.0}
 
 	// create the collision box for the the cube
-	var cubeMass m.Real = 8.0
+	var cubeMass float64 = 8.0
 	var cubeInertia m.Matrix3
 	cubeCollider := cubez.NewCollisionCube(nil, m.Vector3{1.0, 1.0, 1.0})
 	cubeCollider.Body.Position = m.Vector3{0.0, 5.0, 0.0}
@@ -202,8 +202,8 @@ func main() {
 }
 
 func fire() {
-	var mass m.Real = 1.5
-	var radius m.Real = 0.2
+	var mass float64 = 1.5
+	var radius float64 = 0.2
 
 	// create a test sphere to render
 	bullet := CreateSphere(float32(radius), 16, 16)
@@ -215,7 +215,7 @@ func fire() {
 	bulletCollider.Body.Position = m.Vector3{0.0, 1.5, 20.0}
 
 	var cubeInertia m.Matrix3
-	var coeff m.Real = 0.4 * mass * radius * radius
+	var coeff float64 = 0.4 * mass * radius * radius
 	cubeInertia.SetInertiaTensorCoeffs(coeff, coeff, coeff, 0.0, 0.0, 0.0)
 	bulletCollider.GetBody().SetInertiaTensor(&cubeInertia)
 
