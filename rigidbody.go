@@ -36,7 +36,7 @@ type RigidBody struct {
 	Position m.Vector3
 
 	// Orientation is the angular orientation of the RigidBody.
-	Orientation m.Quat
+	Orientation m.Quaternion
 
 	// Velocity is the linear velocity of the RigidBody in World Space.
 	Velocity m.Vector3

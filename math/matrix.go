@@ -164,8 +164,8 @@ func (m *Matrix3) TransformTranspose(v *Vector3) Vector3 {
 
 // SetAsTransform sets the 3x4 matrix to be a transform matrix based
 // on the position and orientation passed in.
-func (m *Matrix3x4) SetAsTransform(pos *Vector3, rot *Quat) {
-	w, x, y, z := rot[0], rot[1], rot[2], rot[3]
+func (m *Matrix3x4) SetAsTransform(pos *Vector3, rot *Quaternion) {
+	x, y, z, w := rot.X, rot.Y, rot.Z, rot.W
 
 	m[0] = 1 - 2*y*y - 2*z*z
 	m[1] = 2*x*y + 2*w*z

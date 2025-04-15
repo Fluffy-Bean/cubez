@@ -12,10 +12,9 @@ type Vector3 struct {
 }
 
 // Vector4 is a vector of four floats.
-type Vector4 [4]float64
-
-// Quat is the type of a quaternion (w,x,y,z).
-type Quat Vector4
+type Vector4 struct {
+	X, Y, Z, W float64
+}
 
 // Clear sets the vector to {0.0, 0.0, 0.0}.
 func (v *Vector3) Clear() {
@@ -132,8 +131,8 @@ func (v *Vector3) Subtract(v2 *Vector3) {
 
 // Scale multiplies a vector by a float64 number.
 func (v *Vector4) Scale(scale float64) {
-	v[0] *= scale
-	v[1] *= scale
-	v[2] *= scale
-	v[3] *= scale
+	v.X *= scale
+	v.Y *= scale
+	v.Z *= scale
+	v.W *= scale
 }

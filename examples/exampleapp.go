@@ -152,11 +152,11 @@ func SetGlVector3(dst *mgl.Vec3, src *m.Vector3) {
 }
 
 // SetGlQuat copies the values from one math library vector to another.
-func SetGlQuat(dst *mgl.Quat, src *m.Quat) {
-	dst.W = float32(src[0])
-	dst.V[0] = float32(src[1])
-	dst.V[1] = float32(src[2])
-	dst.V[2] = float32(src[3])
+func SetGlQuat(dst *mgl.Quat, src *m.Quaternion) {
+	dst.V[0] = float32(src.X)
+	dst.V[1] = float32(src.Y)
+	dst.V[2] = float32(src.Z)
+	dst.W = float32(src.W)
 }
 
 type Entity struct {

@@ -3,58 +3,64 @@
 
 package math
 
-import "math"
+import (
+	"math"
+)
+
+// Quaternion is an alias for Vector4
+type Quaternion Vector4
 
 // QuatFromAxis creates an quaternion from an axis and an angle.
-func QuatFromAxis(angle, x, y, z float64) Quat {
+func QuatFromAxis(angle, x, y, z float64) Quaternion {
 	s := math.Sin(angle / 2.0)
 	c := math.Cos(angle / 2.0)
 
-	result := Quat{c, x * s, y * s, z * s}
+	result := Quaternion{c, x * s, y * s, z * s}
 	result.Normalize()
 	return result
 }
 
 // AddScaledVector adds the given vector to this quaternion, scaled
 // by the given amount.
-func (q *Quat) AddScaledVector(v *Vector3, scale float64) {
-	var temp Quat
-	temp[0] = 0.0
-	temp[1] = v.X * scale
-	temp[2] = v.Y * scale
-	temp[3] = v.Z * scale
+func (q *Quaternion) AddScaledVector(v *Vector3, scale float64) {
+	var temp Quaternion
 
-	temp.Mul(q)
+	temp.X = v.X * scale
+	temp.Y = v.Y * scale
+	temp.Z = v.Z * scale
+	temp.W = 0.0
 
-	q[0] += temp[0] * 0.5
-	q[1] += temp[1] * 0.5
-	q[2] += temp[2] * 0.5
-	q[3] += temp[3] * 0.5
+	temp.Multiply(q)
+
+	q.X += temp.X * 0.5
+	q.Y += temp.Y * 0.5
+	q.Z += temp.Z * 0.5
+	q.W += temp.W * 0.5
 }
 
 // SetIdentity loads the quaternion with its identity.
-func (q *Quat) SetIdentity() {
-	q[0], q[1], q[2], q[3] = 1.0, 0.0, 0.0, 0.0
+func (q *Quaternion) SetIdentity() {
+	q.X, q.Y, q.Z, q.W = 0.0, 0.0, 0.0, 1.0
 }
 
 // Len returns the length of the quaternion.
-func (q *Quat) Len() float64 {
-	return math.Sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3])
+func (q *Quaternion) Len() float64 {
+	return math.Sqrt(q.X*q.X + q.Y*q.Y + q.Z*q.Z + q.W*q.W)
 }
 
-// Mul multiplies the quaternion by another quaternion.
-func (q *Quat) Mul(q2 *Quat) {
+// Multiply multiplies the quaternion by another quaternion.
+func (q *Quaternion) Multiply(q2 *Quaternion) {
 	var w, x, y, z float64
-	w = q[0]*q2[0] - q[1]*q2[1] - q[2]*q2[2] - q[3]*q2[3]
-	x = q[0]*q2[1] + q[1]*q2[0] + q[2]*q2[3] - q[3]*q2[2]
-	y = q[0]*q2[2] + q[2]*q2[0] + q[3]*q2[1] - q[1]*q2[3]
-	z = q[0]*q2[3] + q[3]*q2[0] + q[1]*q2[2] - q[2]*q2[1]
-	q[0], q[1], q[2], q[3] = w, x, y, z
+	w = q.W*q2.W - q.X*q2.X - q.Y*q2.Y - q.Z*q2.Z
+	x = q.W*q2.X + q.X*q2.W + q.Y*q2.Z - q.Z*q2.Y
+	y = q.W*q2.Y + q.Y*q2.W + q.Z*q2.X - q.X*q2.Z
+	z = q.W*q2.Z + q.Z*q2.W + q.X*q2.Y - q.Y*q2.X
+	q.W, q.X, q.Y, q.Z = w, x, y, z
 }
 
 // Rotate rotates a vector by the rotation this quaternion represents.
-func (q *Quat) Rotate(v *Vector3) Vector3 {
-	qvec := Vector3{q[1], q[2], q[3]}
+func (q *Quaternion) Rotate(v *Vector3) Vector3 {
+	qvec := Vector3{q.X, q.Y, q.Z}
 	cross := qvec.Cross(v)
 
 	// v + 2q_w * (q_v x v) + 2q_v x (q_v x v)
@@ -64,18 +70,18 @@ func (q *Quat) Rotate(v *Vector3) Vector3 {
 	c2 := qvec.Cross(&cross)
 	result.Add(&c2)
 
-	cross.Scale(2.0 * q[0])
+	cross.Scale(2.0 * q.W)
 	result.Add(&cross)
 	return result
 }
 
-// Conjugated returns the conjugate of a quaternion. Equivalent to Quat{w,-x,-y,-z}.
-func (q *Quat) Conjugated() Quat {
-	return Quat{q[0], -q[1], -q[2], -q[3]}
+// Conjugated returns the conjugate of a quaternion. Equivalent to Quaternion{w,-x,-y,-z}.
+func (q *Quaternion) Conjugated() Quaternion {
+	return Quaternion{-q.X, -q.Y, -q.Z, q.W}
 }
 
 // Normalize normalizes the quaternion.
-func (q *Quat) Normalize() {
+func (q *Quaternion) Normalize() {
 	length := q.Len()
 
 	if FloatsEqual(1.0, length) {
@@ -92,16 +98,13 @@ func (q *Quat) Normalize() {
 	}
 
 	invLength := 1.0 / length
-	q[0] *= invLength
-	q[1] *= invLength
-	q[2] *= invLength
-	q[3] *= invLength
+	q.Scale(invLength)
 }
 
 // LookAt sets the quaternion to the orientation needed to look at a 'center' from
 // the 'eye' position with 'up' as a reference vector for the up direction.
 // Note: this was modified from the go-gl/mathgl library.
-func (q *Quat) LookAt(eye, center, up *Vector3) {
+func (q *Quaternion) LookAt(eye, center, up *Vector3) {
 	direction := center
 	direction.Subtract(eye)
 	direction.Normalize()
@@ -120,18 +123,18 @@ func (q *Quat) LookAt(eye, center, up *Vector3) {
 	upCur := rotDir.Rotate(&Vector3{0, 1, 0})
 	rotTarget := QuatBetweenVectors(&upCur, up)
 
-	rotTarget.Mul(&rotDir) // remember, in reverse order.
-	rotTarget.Inverse()    // camera rotation should be inversed!
+	rotTarget.Multiply(&rotDir) // remember, in reverse order.
+	rotTarget.Inverse()         // camera rotation should be inversed!
 
-	q[0] = rotTarget[0]
-	q[1] = rotTarget[1]
-	q[2] = rotTarget[2]
-	q[3] = rotTarget[3]
+	q.X = rotTarget.X
+	q.Y = rotTarget.Y
+	q.Z = rotTarget.Z
+	q.W = rotTarget.W
 }
 
 // QuatBetweenVectors calculates the rotation between two vectors.
 // Note: this was modified from the go-gl/mathgl library.
-func QuatBetweenVectors(s, d *Vector3) Quat {
+func QuatBetweenVectors(s, d *Vector3) Quaternion {
 	start := *s
 	dest := *d
 	start.Normalize()
@@ -158,7 +161,7 @@ func QuatBetweenVectors(s, d *Vector3) Quat {
 	ang := math.Sqrt((1.0 + cosTheta) * 2.0)
 	axis.Scale(1.0 / ang)
 
-	return Quat{
+	return Quaternion{
 		ang * 0.5,
 		axis.X, axis.Y, axis.Z,
 	}
@@ -170,24 +173,24 @@ func QuatBetweenVectors(s, d *Vector3) Quat {
 // This method computes the square norm by directly adding the sum
 // of the squares of all terms instead of actually squaring q1.Len(),
 // both for performance and percision.
-func (q *Quat) Inverse() {
+func (q *Quaternion) Inverse() {
 	c := q.Conjugated()
 	c.Scale(1.0 / q.Dot(q))
-	q[0] = c[0]
-	q[1] = c[1]
-	q[2] = c[2]
-	q[3] = c[3]
+	q.X = c.X
+	q.Y = c.Y
+	q.Z = c.Z
+	q.W = c.W
 }
 
 // Scale scales every element of the quaternion by some constant factor.
-func (q *Quat) Scale(c float64) {
-	q[0] *= c
-	q[1] *= c
-	q[2] *= c
-	q[3] *= c
+func (q *Quaternion) Scale(c float64) {
+	q.X *= c
+	q.Y *= c
+	q.Z *= c
+	q.W *= c
 }
 
 // Dot calculates the dot product between two quaternions, equivalent to if this was a Vector4
-func (q *Quat) Dot(q2 *Quat) float64 {
-	return q[0]*q2[0] + q[1]*q2[1] + q[2]*q2[2] + q[3]*q2[3]
+func (q *Quaternion) Dot(q2 *Quaternion) float64 {
+	return q.Y*q2.Y + q.Y*q2.Y + q.Z*q2.Z + q.W*q2.W
 }
