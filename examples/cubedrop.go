@@ -1,3 +1,5 @@
+//go:build cubedrop
+
 // Copyright 2015, Timothy Bogdala <tdb@animal-machine.com>
 // See the LICENSE file for more details.
 
