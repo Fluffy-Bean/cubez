@@ -20,9 +20,9 @@ func QuatFromAxis(angle, x, y, z float64) Quat {
 func (q *Quat) AddScaledVector(v *Vector3, scale float64) {
 	var temp Quat
 	temp[0] = 0.0
-	temp[1] = v[0] * scale
-	temp[2] = v[1] * scale
-	temp[3] = v[2] * scale
+	temp[1] = v.X * scale
+	temp[2] = v.Y * scale
+	temp[3] = v.Z * scale
 
 	temp.Mul(q)
 
@@ -60,11 +60,11 @@ func (q *Quat) Rotate(v *Vector3) Vector3 {
 	// v + 2q_w * (q_v x v) + 2q_v x (q_v x v)
 	result := *v
 
-	qvec.MulWith(2.0)
+	qvec.Scale(2.0)
 	c2 := qvec.Cross(&cross)
 	result.Add(&c2)
 
-	cross.MulWith(2.0 * q[0])
+	cross.Scale(2.0 * q[0])
 	result.Add(&cross)
 	return result
 }
@@ -103,7 +103,7 @@ func (q *Quat) Normalize() {
 // Note: this was modified from the go-gl/mathgl library.
 func (q *Quat) LookAt(eye, center, up *Vector3) {
 	direction := center
-	direction.Sub(eye)
+	direction.Subtract(eye)
 	direction.Normalize()
 
 	// Find the rotation between the front of the object (that we assume towards Z-,
@@ -151,16 +151,16 @@ func QuatBetweenVectors(s, d *Vector3) Quat {
 		}
 
 		axis.Normalize()
-		return QuatFromAxis(math.Pi, axis[0], axis[1], axis[2])
+		return QuatFromAxis(math.Pi, axis.X, axis.Y, axis.Z)
 	}
 
 	axis := start.Cross(&dest)
 	ang := math.Sqrt((1.0 + cosTheta) * 2.0)
-	axis.MulWith(1.0 / ang)
+	axis.Scale(1.0 / ang)
 
 	return Quat{
 		ang * 0.5,
-		axis[0], axis[1], axis[2],
+		axis.X, axis.Y, axis.Z,
 	}
 }
 

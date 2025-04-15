@@ -61,7 +61,7 @@ func NewContact() *Contact {
 func (c *Contact) calculateInternals(duration float64) {
 	// make sure that if there's only one body that it's in the first spot
 	if c.Bodies[0] == nil {
-		c.ContactNormal.MulWith(-1.0)
+		c.ContactNormal.Scale(-1.0)
 		c.Bodies[0] = c.Bodies[1]
 		c.Bodies[1] = nil
 	}
@@ -71,15 +71,15 @@ func (c *Contact) calculateInternals(duration float64) {
 
 	// store the relative position of the contact to each body
 	c.relativeContactPosition[0].Set(&c.ContactPoint)
-	c.relativeContactPosition[0].Sub(&c.Bodies[0].Position)
+	c.relativeContactPosition[0].Subtract(&c.Bodies[0].Position)
 	c.contactVelocity = c.calculateLocalVelocity(0, duration)
 
 	if c.Bodies[1] != nil {
 		c.relativeContactPosition[1].Set(&c.ContactPoint)
-		c.relativeContactPosition[1].Sub(&c.Bodies[1].Position)
+		c.relativeContactPosition[1].Subtract(&c.Bodies[1].Position)
 
 		contactVelocity1 := c.calculateLocalVelocity(1, duration)
-		c.contactVelocity.Sub(&contactVelocity1)
+		c.contactVelocity.Subtract(&contactVelocity1)
 	}
 
 	// calculate the desired change in velocity for resolution
@@ -94,23 +94,23 @@ func (c *Contact) calculateDesiredDeltaVelocity(duration float64) {
 	var tempVelocity m.Vector3
 	if c.Bodies[0].IsAwake {
 		tempVelocity = c.Bodies[0].GetLastFrameAccelleration()
-		tempVelocity.MulWith(duration)
+		tempVelocity.Scale(duration)
 		velocityFromAcc += tempVelocity.Dot(&c.ContactNormal)
 	}
 	if c.Bodies[1] != nil && c.Bodies[1].IsAwake {
 		tempVelocity = c.Bodies[1].GetLastFrameAccelleration()
-		tempVelocity.MulWith(duration)
+		tempVelocity.Scale(duration)
 		velocityFromAcc -= tempVelocity.Dot(&c.ContactNormal)
 	}
 
 	// if the velocity is very slow, limit the restitution
 	restitution := c.Restitution
-	if math.Abs(c.contactVelocity[0]) < velocityLimit {
+	if math.Abs(c.contactVelocity.X) < velocityLimit {
 		restitution = 0.0
 	}
 
 	// combine the bounce velocity with the removed acceleration velocity
-	c.desiredDeltaVelocity = -c.contactVelocity[0] - restitution*(c.contactVelocity[0]-velocityFromAcc)
+	c.desiredDeltaVelocity = -c.contactVelocity.X - restitution*(c.contactVelocity.X-velocityFromAcc)
 }
 
 // Constructs an arbitrary orthonormal basis for the contact. It's stored
@@ -121,36 +121,36 @@ func (c *Contact) calculateContactBasis() {
 	var contactTangentY m.Vector3
 	var contactTangentZ m.Vector3
 
-	absContactNormalX := math.Abs(c.ContactNormal[0])
-	absContactNormalY := math.Abs(c.ContactNormal[1])
+	absContactNormalX := math.Abs(c.ContactNormal.X)
+	absContactNormalY := math.Abs(c.ContactNormal.Y)
 
 	// check whether the z axis is nearer to the x or y axis
 	if absContactNormalX > absContactNormalY {
 		// generate a scaling factor to ensure results are normalized
-		s := float64(1.0) / math.Sqrt(c.ContactNormal[2]*c.ContactNormal[2]+c.ContactNormal[0]*c.ContactNormal[0])
+		s := 1.0 / math.Sqrt(c.ContactNormal.Z*c.ContactNormal.Z+c.ContactNormal.X*c.ContactNormal.X)
 
 		// the new x axis is at right angles to the world y axis
-		contactTangentY[0] = c.ContactNormal[2] * s
-		contactTangentY[1] = 0
-		contactTangentY[2] = c.ContactNormal[0] * -s
+		contactTangentY.X = c.ContactNormal.Z * s
+		contactTangentY.Y = 0
+		contactTangentY.Z = c.ContactNormal.X * -s
 
 		// the new y axis is at right angles to the new x and z axes
-		contactTangentZ[0] = c.ContactNormal[1] * contactTangentY[0]
-		contactTangentZ[1] = c.ContactNormal[2]*contactTangentY[0] - c.ContactNormal[0]*contactTangentY[2]
-		contactTangentZ[2] = -c.ContactNormal[1] * contactTangentY[0]
+		contactTangentZ.X = c.ContactNormal.Y * contactTangentY.X
+		contactTangentZ.Y = c.ContactNormal.Z*contactTangentY.X - c.ContactNormal.X*contactTangentY.Z
+		contactTangentZ.Z = -c.ContactNormal.Y * contactTangentY.X
 	} else {
 		// generate a scaling factor to ensure results are normalized
-		s := float64(1.0) / math.Sqrt(c.ContactNormal[2]*c.ContactNormal[2]+c.ContactNormal[1]*c.ContactNormal[1])
+		s := 1.0 / math.Sqrt(c.ContactNormal.Z*c.ContactNormal.Z+c.ContactNormal.Y*c.ContactNormal.Y)
 
 		// the new x axis is at right angles to the world y axis
-		contactTangentY[0] = 0
-		contactTangentY[1] = -c.ContactNormal[2] * s
-		contactTangentY[2] = c.ContactNormal[1] * s
+		contactTangentY.X = 0
+		contactTangentY.Y = -c.ContactNormal.Z * s
+		contactTangentY.Z = c.ContactNormal.Y * s
 
 		// the new y axis is at right angles to the new x and z axes
-		contactTangentZ[0] = c.ContactNormal[1]*contactTangentY[2] - c.ContactNormal[2]*contactTangentY[1]
-		contactTangentZ[1] = -c.ContactNormal[0] * contactTangentY[2]
-		contactTangentZ[2] = c.ContactNormal[0] * contactTangentY[1]
+		contactTangentZ.X = c.ContactNormal.Y*contactTangentY.Z - c.ContactNormal.Z*contactTangentY.Y
+		contactTangentZ.Y = -c.ContactNormal.X * contactTangentY.Z
+		contactTangentZ.Z = c.ContactNormal.X * contactTangentY.Y
 	}
 
 	// now set the contactToWorld matrix based off of these three vectors
@@ -170,11 +170,11 @@ func (c *Contact) calculateLocalVelocity(bodyIndex int, duration float64) m.Vect
 
 	// calculate the amount of velocity that is due to forces without reactions
 	accVelocity := body.GetLastFrameAccelleration()
-	accVelocity.MulWith(duration)
+	accVelocity.Scale(duration)
 	accVelocity = c.contactToWorld.TransformTranspose(&accVelocity)
 
 	// we ignore any component of acceleration in the contact normal direction
-	accVelocity[0] = 0.0
+	accVelocity.X = 0.0
 
 	// add the planar velocity -- if there's enough friction they will
 	// be removed during the velocity resolution
@@ -361,12 +361,12 @@ func (c *Contact) applyPositionChange(penetration float64) (linearChange, angula
 			targetAngularDirection := c.relativeContactPosition[i].Cross(&c.ContactNormal)
 			inverseInertiaTensor := body.GetInverseInertiaTensorWorld()
 			angularChange[i] = inverseInertiaTensor.MulVector3(&targetAngularDirection)
-			angularChange[i].MulWith(angularMove[i] / angularInertia[i])
+			angularChange[i].Scale(angularMove[i] / angularInertia[i])
 		}
 
 		// velocity change is easier -- it's just the linear movement along ContactNormal
 		linearChange[i] = c.ContactNormal
-		linearChange[i].MulWith(linearMove[i])
+		linearChange[i].Scale(linearMove[i])
 
 		// now we can start to apply the  values we've calculated, starting with linear movement
 		body.Position.AddScaled(&c.ContactNormal, linearMove[i])
@@ -435,7 +435,7 @@ func adjustVelocities(maxIterations int, contacts []*Contact, duration float64) 
 						}
 
 						tmpContactVelocity := c2.contactToWorld.TransformTranspose(&deltaVel)
-						tmpContactVelocity.MulWith(sign)
+						tmpContactVelocity.Scale(sign)
 						c2.contactVelocity.Add(&tmpContactVelocity)
 						c2.calculateDesiredDeltaVelocity(duration)
 					}
@@ -526,9 +526,9 @@ func (c *Contact) calculateFrictionlessImpulse(inverseInertiaTensors [2]m.Matrix
 	}
 
 	// calculate the required size of the impulse
-	impulseContact[0] = c.desiredDeltaVelocity / deltaVelocity
-	impulseContact[1] = 0
-	impulseContact[2] = 0
+	impulseContact.X = c.desiredDeltaVelocity / deltaVelocity
+	impulseContact.Y = 0
+	impulseContact.Z = 0
 	return
 }
 
@@ -581,27 +581,25 @@ func (c *Contact) calculateFrictionImpulse(inverseInertiaTensors [2]m.Matrix3) (
 
 	// find the target velocities to kill
 	velKill := m.Vector3{
-		c.desiredDeltaVelocity,
-		-c.contactVelocity[1],
-		-c.contactVelocity[2],
+		X: c.desiredDeltaVelocity,
+		Y: -c.contactVelocity.Y,
+		Z: -c.contactVelocity.Z,
 	}
 
 	// find the impulse to kill target velocities
 	impulseContact = impulseMatrix.MulVector3(&velKill)
 
 	// check for exceeding friction
-	planarImpulse := math.Sqrt(impulseContact[1]*impulseContact[1] + impulseContact[2]*impulseContact[2])
-	if planarImpulse > impulseContact[0]*c.Friction {
+	planarImpulse := math.Sqrt(impulseContact.Y*impulseContact.Y + impulseContact.Z*impulseContact.Z)
+	if planarImpulse > impulseContact.X*c.Friction {
 		// we need to use dynamic friction
-		impulseContact[1] /= planarImpulse
-		impulseContact[2] /= planarImpulse
+		impulseContact.Y /= planarImpulse
+		impulseContact.Z /= planarImpulse
 
-		impulseContact[0] = deltaVelocity[0] +
-			deltaVelocity[3]*c.Friction*impulseContact[1] +
-			deltaVelocity[6]*c.Friction*impulseContact[2]
-		impulseContact[0] = c.desiredDeltaVelocity / impulseContact[0]
-		impulseContact[1] *= c.Friction * impulseContact[0]
-		impulseContact[2] *= c.Friction * impulseContact[0]
+		impulseContact.X = deltaVelocity[0] + deltaVelocity[3]*c.Friction*impulseContact.Y + deltaVelocity[6]*c.Friction*impulseContact.Z
+		impulseContact.X = c.desiredDeltaVelocity / impulseContact.X
+		impulseContact.Y *= c.Friction * impulseContact.X
+		impulseContact.Z *= c.Friction * impulseContact.X
 	}
 
 	return
@@ -612,7 +610,7 @@ func (c *Contact) calculateFrictionImpulse(inverseInertiaTensors [2]m.Matrix3) (
 // cross prodcut. So if a,b are vectors. a x b = A_s b
 // where A_s is the skew symmetrix form of a.
 func setSkewSymmetric(m *m.Matrix3, v *m.Vector3) {
-	m[0], m[3], m[6] = 0.0, -v[2], v[1]
-	m[1], m[4], m[7] = v[2], 0.0, -v[0]
-	m[2], m[5], m[8] = -v[1], v[0], 0.0
+	m[0], m[3], m[6] = 0.0, -v.Z, v.Y
+	m[1], m[4], m[7] = v.Z, 0.0, -v.X
+	m[2], m[5], m[8] = -v.Y, v.X, 0.0
 }

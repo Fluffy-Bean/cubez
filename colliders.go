@@ -191,7 +191,7 @@ func (s *CollisionSphere) CheckAgainstHalfSpace(plane *CollisionPlane, existingC
 
 	c := NewContact()
 	c.ContactPoint = plane.Normal
-	c.ContactPoint.MulWith(distance + s.Radius*-1.0)
+	c.ContactPoint.Scale(distance + s.Radius*-1.0)
 	c.ContactPoint.Add(&positionAxis)
 	c.ContactNormal = plane.Normal
 	c.Penetration = -distance
@@ -222,7 +222,7 @@ func (s *CollisionSphere) CheckAgainstSphere(secondSphere *CollisionSphere, exis
 
 	// find the vector between the objects
 	midline := positionOne
-	midline.Sub(&positionTwo)
+	midline.Subtract(&positionTwo)
 	size := midline.Magnitude()
 
 	// see if it is large enough to connect
@@ -234,12 +234,12 @@ func (s *CollisionSphere) CheckAgainstSphere(secondSphere *CollisionSphere, exis
 	c := NewContact()
 
 	c.ContactPoint = midline
-	c.ContactPoint.MulWith(0.5)
+	c.ContactPoint.Scale(0.5)
 	c.ContactPoint.Add(&positionOne)
 
 	// we manually create the normal, because we have the size already calculated
 	c.ContactNormal = midline
-	c.ContactNormal.MulWith(1.0 / size)
+	c.ContactNormal.Scale(1.0 / size)
 
 	c.Penetration = s.Radius + secondSphere.Radius - size
 	c.Bodies[0] = s.Body
@@ -347,7 +347,7 @@ func (cube *CollisionCube) CheckAgainstHalfSpace(plane *CollisionPlane, existing
 			// we multiply the direction by half the separation distance and
 			// add the vertex location.
 			c.ContactPoint = plane.Normal
-			c.ContactPoint.MulWith(vertexDistance - plane.Offset)
+			c.ContactPoint.Scale(vertexDistance - plane.Offset)
 			c.ContactPoint.Add(&vertexPos)
 			c.ContactNormal = plane.Normal
 			c.Penetration = plane.Offset - vertexDistance
@@ -373,28 +373,46 @@ func (cube *CollisionCube) CheckAgainstSphere(sphere *CollisionSphere, existingC
 	position := sphere.transform.GetAxis(3)
 	relCenter := cube.transform.TransformInverse(&position)
 	// check to see if we can exclude contact
-	if math.Abs(relCenter[0])-sphere.Radius > cube.HalfSize[0] ||
-		math.Abs(relCenter[1])-sphere.Radius > cube.HalfSize[1] ||
-		math.Abs(relCenter[2])-sphere.Radius > cube.HalfSize[2] {
+	if math.Abs(relCenter.X)-sphere.Radius > cube.HalfSize.X ||
+		math.Abs(relCenter.Y)-sphere.Radius > cube.HalfSize.Y ||
+		math.Abs(relCenter.Z)-sphere.Radius > cube.HalfSize.Z {
 		return false, existingContacts
 	}
 
 	var closestPoint m.Vector3
 
 	// clamp the coordinates to the box
-	for i := 0; i < 3; i++ {
-		dist := relCenter[i]
-		if dist > cube.HalfSize[i] {
-			dist = cube.HalfSize[i]
-		} else if dist < -cube.HalfSize[i] {
-			dist = -cube.HalfSize[i]
+	{
+		dist := relCenter.X
+		if dist > cube.HalfSize.X {
+			dist = cube.HalfSize.X
+		} else if dist < -cube.HalfSize.X {
+			dist = -cube.HalfSize.X
 		}
-		closestPoint[i] = dist
-	}
+		closestPoint.X = dist
+	} // X
+	{
+		dist := relCenter.Y
+		if dist > cube.HalfSize.Y {
+			dist = cube.HalfSize.Y
+		} else if dist < -cube.HalfSize.Y {
+			dist = -cube.HalfSize.Y
+		}
+		closestPoint.Y = dist
+	} // Y
+	{
+		dist := relCenter.Z
+		if dist > cube.HalfSize.Z {
+			dist = cube.HalfSize.Z
+		} else if dist < -cube.HalfSize.Z {
+			dist = -cube.HalfSize.Z
+		}
+		closestPoint.Z = dist
+	} // Z
 
 	// check to see if we're in contact
 	distCheck := closestPoint
-	distCheck.Sub(&relCenter)
+	distCheck.Subtract(&relCenter)
 	dist := distCheck.SquareMagnitude()
 	if dist > sphere.Radius*sphere.Radius {
 		return false, existingContacts
@@ -407,7 +425,7 @@ func (cube *CollisionCube) CheckAgainstSphere(sphere *CollisionSphere, existingC
 	c := NewContact()
 	c.ContactPoint = closestPointWorld
 	c.ContactNormal = closestPointWorld
-	c.ContactNormal.Sub(&position)
+	c.ContactNormal.Subtract(&position)
 
 	// if the sphere is small enough, or the engine doesn't process fast enough,
 	// you can end up having a relCenter position that's the same as closestPoint --
@@ -486,19 +504,19 @@ func fillPointFaceBoxBox(one *CollisionCube, two *CollisionCube, toCenter *m.Vec
 	// but we need to work out which of the two faces on this axis.
 	normal := one.transform.GetAxis(best)
 	if normal.Dot(toCenter) > 0 {
-		normal.MulWith(-1.0)
+		normal.Scale(-1.0)
 	}
 
 	// Work out which vertex of box two we're colliding with.
 	v := two.HalfSize
 	if twoA0 := two.transform.GetAxis(0); twoA0.Dot(&normal) < 0 {
-		v[0] = -v[0]
+		v.X = -v.X
 	}
 	if twoA1 := two.transform.GetAxis(1); twoA1.Dot(&normal) < 0 {
-		v[1] = -v[1]
+		v.Y = -v.Y
 	}
 	if twoA2 := two.transform.GetAxis(2); twoA2.Dot(&normal) < 0 {
-		v[2] = -v[2]
+		v.Z = -v.Z
 	}
 
 	c := NewContact()
@@ -532,7 +550,7 @@ func contactPoint(pOne *m.Vector3, dOne *m.Vector3, oneSize float64,
 	dpOneTwo := dTwo.Dot(dOne)
 
 	toSt := *pOne
-	toSt.Sub(pTwo)
+	toSt.Subtract(pTwo)
 	dpStaOne := dOne.Dot(&toSt)
 	dpStaTwo := dTwo.Dot(&toSt)
 
@@ -561,15 +579,15 @@ func contactPoint(pOne *m.Vector3, dOne *m.Vector3, oneSize float64,
 	}
 
 	cOne := *dOne
-	cOne.MulWith(mua)
+	cOne.Scale(mua)
 	cOne.Add(pOne)
 
 	cTwo := *dTwo
-	cTwo.MulWith(mub)
+	cTwo.Scale(mub)
 	cTwo.Add(pTwo)
 
-	cOne.MulWith(0.5)
-	cTwo.MulWith(0.5)
+	cOne.Scale(0.5)
+	cTwo.Scale(0.5)
 	cOne.Add(&cTwo)
 	return cOne
 }
@@ -579,7 +597,7 @@ func (cube *CollisionCube) CheckAgainstCube(secondCube *CollisionCube, existingC
 	// find the vector between two vectors
 	toCenter := secondCube.transform.GetAxis(3)
 	oneAxis3 := cube.transform.GetAxis(3)
-	toCenter.Sub(&oneAxis3)
+	toCenter.Subtract(&oneAxis3)
 
 	var ret bool
 	pen := m.MaxValue
@@ -639,7 +657,7 @@ func (cube *CollisionCube) CheckAgainstCube(secondCube *CollisionCube, existingC
 		// one and two (and therefore also the vector between their
 		// centres).
 		newCenter := toCenter
-		newCenter.MulWith(-1.0)
+		newCenter.Scale(-1.0)
 		return true, fillPointFaceBoxBox(secondCube, cube, &newCenter, best-3, pen, existingContacts)
 	} else {
 		// We've got an edge-edge contact. Find out which axes
@@ -653,7 +671,7 @@ func (cube *CollisionCube) CheckAgainstCube(secondCube *CollisionCube, existingC
 
 		// The axis should point from box one to box two.
 		if axis.Dot(&toCenter) > 0 {
-			axis.MulWith(-1.0)
+			axis.Scale(-1.0)
 		}
 
 		// We have the axes, but not the edges: each axis has 4 edges parallel
@@ -666,15 +684,15 @@ func (cube *CollisionCube) CheckAgainstCube(secondCube *CollisionCube, existingC
 		ptOnTwoEdge := secondCube.HalfSize
 		for i := 0; i < 3; i++ {
 			if i == oneAxisIndex {
-				ptOnOneEdge[i] = 0
+				ptOnOneEdge.SetIndex(i, 0)
 			} else if oneAxis := cube.transform.GetAxis(i); oneAxis.Dot(&axis) > 0 {
-				ptOnOneEdge[i] = -ptOnOneEdge[i]
+				ptOnOneEdge.SetIndex(i, -ptOnOneEdge.GetIndex(i))
 			}
 
 			if i == twoAxisIndex {
-				ptOnTwoEdge[i] = 0
+				ptOnTwoEdge.SetIndex(i, 0)
 			} else if twoAxis := secondCube.transform.GetAxis(i); twoAxis.Dot(&axis) < 0 {
-				ptOnTwoEdge[i] = -ptOnTwoEdge[i]
+				ptOnTwoEdge.SetIndex(i, -ptOnTwoEdge.GetIndex(i))
 			}
 		}
 
@@ -690,8 +708,11 @@ func (cube *CollisionCube) CheckAgainstCube(secondCube *CollisionCube, existingC
 		if bestSingleAxis > 2 {
 			useOne = true
 		}
-		contactVertex := contactPoint(&ptOnOneEdge, &oneAxis, cube.HalfSize[oneAxisIndex],
-			&ptOnTwoEdge, &twoAxis, secondCube.HalfSize[twoAxisIndex], useOne)
+		contactVertex := contactPoint(
+			&ptOnOneEdge, &oneAxis, cube.HalfSize.GetIndex(oneAxisIndex),
+			&ptOnTwoEdge, &twoAxis, secondCube.HalfSize.GetIndex(twoAxisIndex),
+			useOne,
+		)
 
 		// finally ... create a new contact
 		c := NewContact()
@@ -766,7 +787,7 @@ func transformToAxis(cube *CollisionCube, axis *m.Vector3) float64 {
 	cubeAxisY := cube.transform.GetAxis(1)
 	cubeAxisZ := cube.transform.GetAxis(2)
 
-	return cube.HalfSize[0]*math.Abs(axis.Dot(&cubeAxisX)) +
-		cube.HalfSize[1]*math.Abs(axis.Dot(&cubeAxisY)) +
-		cube.HalfSize[2]*math.Abs(axis.Dot(&cubeAxisZ))
+	return cube.HalfSize.X*math.Abs(axis.Dot(&cubeAxisX)) +
+		cube.HalfSize.Y*math.Abs(axis.Dot(&cubeAxisY)) +
+		cube.HalfSize.Z*math.Abs(axis.Dot(&cubeAxisZ))
 }

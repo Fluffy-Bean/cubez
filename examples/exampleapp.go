@@ -146,9 +146,9 @@ func init() {
 
 // SetGlVector3 copies the values from one math library vector to another.
 func SetGlVector3(dst *mgl.Vec3, src *m.Vector3) {
-	dst[0] = float32(src[0])
-	dst[1] = float32(src[1])
-	dst[2] = float32(src[2])
+	dst[0] = float32(src.X)
+	dst[1] = float32(src.Y)
+	dst[2] = float32(src.Z)
 }
 
 // SetGlQuat copies the values from one math library vector to another.

@@ -50,9 +50,9 @@ func (m *Matrix3) Add(m2 *Matrix3) {
 // Each vector should be arranged as a column in the matrix and should
 // then be passed in order.
 func (m *Matrix3) SetComponents(v1 *Vector3, v2 *Vector3, v3 *Vector3) {
-	m[0], m[3], m[6] = v1[0], v2[0], v3[0]
-	m[1], m[4], m[7] = v1[1], v2[1], v3[1]
-	m[2], m[5], m[8] = v1[2], v2[2], v3[2]
+	m[0], m[3], m[6] = v1.X, v2.X, v3.X
+	m[1], m[4], m[7] = v1.Y, v2.Y, v3.Y
+	m[2], m[5], m[8] = v1.Z, v2.Z, v3.Z
 }
 
 // SetInertiaTensorCoeffs sets the value of the matrix from inertia tensor values.
@@ -69,9 +69,9 @@ func (m *Matrix3) SetBlockInertiaTensor(halfSize *Vector3, mass float64) {
 	squares := *halfSize
 	squares.ComponentProduct(halfSize)
 	m.SetInertiaTensorCoeffs(
-		0.3*mass*(squares[1]+squares[2]),
-		0.3*mass*(squares[0]+squares[2]),
-		0.3*mass*(squares[0]+squares[1]),
+		0.3*mass*(squares.Y+squares.Z),
+		0.3*mass*(squares.X+squares.Z),
+		0.3*mass*(squares.X+squares.Y),
 		0.0, 0.0, 0.0,
 	)
 }
@@ -79,9 +79,9 @@ func (m *Matrix3) SetBlockInertiaTensor(halfSize *Vector3, mass float64) {
 // MulVector3 multiplies a 3x3 matrix by a vector.
 func (m *Matrix3) MulVector3(v *Vector3) Vector3 {
 	return Vector3{
-		m[0]*v[0] + m[3]*v[1] + m[6]*v[2],
-		m[1]*v[0] + m[4]*v[1] + m[7]*v[2],
-		m[2]*v[0] + m[5]*v[1] + m[8]*v[2],
+		m[0]*v.X + m[3]*v.Y + m[6]*v.Z,
+		m[1]*v.X + m[4]*v.Y + m[7]*v.Z,
+		m[2]*v.X + m[5]*v.Y + m[8]*v.Z,
 	}
 }
 
@@ -156,9 +156,9 @@ func (m *Matrix3) Invert() Matrix3 {
 // of this matrix
 func (m *Matrix3) TransformTranspose(v *Vector3) Vector3 {
 	return Vector3{
-		v[0]*m[0] + v[1]*m[1] + v[2]*m[2],
-		v[0]*m[3] + v[1]*m[4] + v[2]*m[5],
-		v[0]*m[6] + v[1]*m[7] + v[2]*m[8],
+		v.X*m[0] + v.Y*m[1] + v.Z*m[2],
+		v.X*m[3] + v.Y*m[4] + v.Z*m[5],
+		v.X*m[6] + v.Y*m[7] + v.Z*m[8],
 	}
 }
 
@@ -179,17 +179,17 @@ func (m *Matrix3x4) SetAsTransform(pos *Vector3, rot *Quat) {
 	m[7] = 2*y*z - 2*w*x
 	m[8] = 1 - 2*x*x - 2*y*y
 
-	m[9] = pos[0]
-	m[10] = pos[1]
-	m[11] = pos[2]
+	m[9] = pos.X
+	m[10] = pos.Y
+	m[11] = pos.Z
 }
 
 // MulVector3 transforms the given vector by the matrix and returns the result.
 func (m *Matrix3x4) MulVector3(v *Vector3) Vector3 {
 	return Vector3{
-		v[0]*m[0] + v[1]*m[3] + v[2]*m[6] + m[9],
-		v[0]*m[1] + v[1]*m[4] + v[2]*m[7] + m[10],
-		v[0]*m[2] + v[1]*m[5] + v[2]*m[8] + m[11],
+		v.X*m[0] + v.Y*m[3] + v.Z*m[6] + m[9],
+		v.X*m[1] + v.Y*m[4] + v.Z*m[7] + m[10],
+		v.X*m[2] + v.Y*m[5] + v.Z*m[8] + m[11],
 	}
 }
 
@@ -221,14 +221,14 @@ func (m *Matrix3x4) MulMatrix3x4(o *Matrix3x4) Matrix3x4 {
 // NOTE: will not work on matrixes with scale or shears.
 func (m *Matrix3x4) TransformInverse(v *Vector3) Vector3 {
 	tmp := *v
-	tmp[0] -= m[9]
-	tmp[1] -= m[10]
-	tmp[2] -= m[11]
+	tmp.X -= m[9]
+	tmp.Y -= m[10]
+	tmp.Z -= m[11]
 
 	return Vector3{
-		tmp[0]*m[0] + tmp[1]*m[1] + tmp[2]*m[2],
-		tmp[0]*m[3] + tmp[1]*m[4] + tmp[2]*m[5],
-		tmp[0]*m[6] + tmp[1]*m[7] + tmp[2]*m[8],
+		tmp.X*m[0] + tmp.Y*m[1] + tmp.Z*m[2],
+		tmp.X*m[3] + tmp.Y*m[4] + tmp.Z*m[5],
+		tmp.X*m[6] + tmp.Y*m[7] + tmp.Z*m[8],
 	}
 }
 

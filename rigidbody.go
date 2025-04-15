@@ -205,8 +205,8 @@ func (body *RigidBody) AddRotation(v *m.Vector3) {
 // ClearAccumulators resets all of the stored linear and torque forces
 // stored in the body.
 func (body *RigidBody) ClearAccumulators() {
-	body.forceAccum[0], body.forceAccum[1], body.forceAccum[2] = 0.0, 0.0, 0.0
-	body.torqueAccum[0], body.torqueAccum[1], body.torqueAccum[2] = 0.0, 0.0, 0.0
+	body.forceAccum.X, body.forceAccum.Y, body.forceAccum.Z = 0.0, 0.0, 0.0
+	body.torqueAccum.X, body.torqueAccum.Y, body.torqueAccum.Z = 0.0, 0.0, 0.0
 }
 
 // Integrate takes all of the forces accumulated in the RigidBody and
@@ -231,8 +231,8 @@ func (body *RigidBody) Integrate(duration float64) {
 	body.Rotation.AddScaled(&angularAcceleration, duration)
 
 	// impose drag
-	body.Velocity.MulWith(math.Pow(body.LinearDamping, duration))
-	body.Rotation.MulWith(math.Pow(body.AngularDamping, duration))
+	body.Velocity.Scale(math.Pow(body.LinearDamping, duration))
+	body.Rotation.Scale(math.Pow(body.AngularDamping, duration))
 
 	// adjust positions
 	// update linear positions
